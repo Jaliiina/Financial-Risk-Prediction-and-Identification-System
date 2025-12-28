@@ -96,7 +96,7 @@ trained_model = train_multitask_model(
 
 ```text
 
-finrisk_b/
+root/
 ├── data/
 │   ├── feature_causality.json  # 特征因果分析结果
 │   └── ...（数据文件）
