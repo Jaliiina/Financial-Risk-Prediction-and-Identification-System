@@ -1,0 +1,313 @@
+/* =============== AuroraFin 全局主题 =============== */
+:root {
+  --bg:#f6f8ff;
+  --card:#ffffff;
+  --muted:#64748b;
+  --text:#0f172a;
+  --primary:#5eead4;       /* mint/teal */
+  --accent:#7c3aed;        /* aurora purple */
+  --accent2:#22d3ee;       /* cyan */
+  --warning:#f59e0b;
+  --danger:#ef4444;
+  --success:#16a34a;
+  --border:#e5e7eb;
+}
+
+/* Aurora 光流渐变 */
+.brand-gradient {
+  background: linear-gradient(135deg, var(--accent), var(--accent2), var(--primary));
+  background-size: 200% 200%;
+  animation: aurora 8s ease infinite;
+}
+@keyframes aurora {
+  0% { background-position: 0% 50% }
+  50% { background-position: 100% 50% }
+  100% { background-position: 0% 50% }
+}
+
+/* =============== 页面结构基础 =============== */
+* { box-sizing: border-box; margin:0; padding:0 }
+html, body { height:100%; font-family: system-ui,Segoe UI,Roboto,Helvetica,Arial }
+body {
+  background: radial-gradient(1200px 600px at 20% -10%, #fff, #f6f8ff 60%);
+  color: var(--text);
+}
+
+/* Header / Footer */
+.app-header, .app-footer {
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  padding: 16px 24px;
+}
+.app-header.brand {
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(180deg, rgba(124,58,237,.05), transparent);
+}
+.app-footer {
+  border-top:1px solid var(--border);
+  text-align:center;
+  color:var(--muted);
+}
+
+/* Container + Cards */
+.container { max-width:1200px; margin:24px auto; padding:0 16px; }
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px 18px 22px;
+  margin-bottom: 20px;
+  box-shadow: 0 10px 30px rgba(2,6,23,.06);
+}
+/* 添加风险指标卡片样式 */
+.risk-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.metric-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+}
+
+.metric-value {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 8px 0;
+}
+
+.metric-value.risk { color: var(--danger); }
+.metric-value.opportunity { color: var(--success); }
+.metric-value.neutral { color: var(--muted); }
+
+.metric-label {
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* 调整表格样式以适应更多列 */
+.table-compact {
+  font-size: 11px;
+}
+
+.table-compact th,
+.table-compact td {
+  padding: 4px 6px;
+}
+
+/* 风险带图例样式 */
+.legend-band {
+  display: inline-block;
+  width: 16px;
+  height: 4px;
+  border-radius: 2px;
+  margin-right: 6px;
+}
+
+.band-risk { background: rgba(255, 91, 91, 0.3); }
+.band-opportunity { background: rgba(255, 181, 76, 0.4); }
+
+/* 添加SHAP相关样式 */
+.shap-panel {
+    background: linear-gradient(135deg, #f8fafc, #ffffff);
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 16px;
+}
+
+.feature-impact-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.feature-impact-badge.risk {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.feature-impact-badge.opportunity {
+    background: #dcfce7;
+    color: #065f46;
+    border: 1px solid #bbf7d0;
+}
+
+.shap-value {
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+/* 标题文字 */
+h1,h2,h3 { margin-bottom: 10px; font-weight:600 }
+h2 { font-size:18px; }
+p { margin-bottom:10px; line-height:1.6; color:var(--text); }
+
+/* =============== 按钮与表单 =============== */
+.actions { display:flex; gap:10px; align-items:center; margin-top:12px; flex-wrap:wrap }
+.btn {
+  padding:10px 16px;
+  border-radius:12px;
+  border:1px solid #cbd5e1;
+  background:#f8fafc;
+  color:var(--text);
+  cursor:pointer;
+  transition:transform .05s ease, filter .2s ease;
+}
+.btn:hover { filter:brightness(1.06); }
+.btn:active { transform:translateY(1px); }
+.btn.primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent2), var(--primary));
+  color: #fff;
+  border: none;
+}
+.btn.primary.brand {
+  background: linear-gradient(135deg, var(--accent), var(--accent2), var(--primary));
+  color: #fff;
+}
+input[type=text] {
+  width:100%;
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid #cbd5e1;
+  background:#fff;
+  outline:none;
+}
+input[type=text]:focus {
+  border-color:#94a3b8;
+  box-shadow:0 0 0 4px rgba(148,163,184,.15);
+}
+
+/* =============== AuroraFin 品牌头部 =============== */
+.brand-logo {
+  display:flex; align-items:center; gap:10px;
+  font-weight:700; letter-spacing:0.3px;
+}
+.brand-logo .mark {
+  width:28px; height:28px; border-radius:8px; opacity:.95;
+  background: radial-gradient(12px 12px at 30% 30%, #fff, transparent 60%),
+              linear-gradient(135deg, #7c3aed, #22d3ee, #5eead4);
+  box-shadow: 0 8px 24px rgba(124,58,237,.25);
+}
+.brand-logo .name { font-size:18px; }
+.brand-logo .sub { font-weight:600; color:#6b7280; font-size:13px; }
+
+/* =============== 风险灯与状态显示 =============== */
+.risk-light { display:flex; align-items:center; gap:10px; margin-top:12px; }
+.risk-pill {
+  display:inline-flex; align-items:center; gap:8px;
+  padding:6px 10px; border-radius:999px;
+  background:#fff; border:1px solid var(--border);
+}
+.risk-dot {
+  width:10px; height:10px; border-radius:50%; background:#cbd5e1;
+}
+.risk-dot.green { background:var(--success); box-shadow:0 0 10px 2px rgba(22,163,74,.6); }
+.risk-dot.yellow { background:var(--warning); box-shadow:0 0 10px 2px rgba(245,158,11,.6); }
+.risk-dot.red { background:var(--danger); box-shadow:0 0 10px 2px rgba(239,68,68,.6); }
+.status { margin-top:12px; color:var(--text); }
+.md { white-space:pre-wrap; line-height:1.6; margin-top:8px; }
+
+/* =============== 聊天区 =============== */
+.chat-grid { display:grid; grid-template-columns:1.6fr .9fr; gap:16px; }
+.chat-card { height:640px; display:flex; flex-direction:column; }
+.chat-scroll {
+  flex:1; overflow:auto; padding:12px;
+  background:#fff; border:1px solid var(--border); border-radius:12px;
+}
+.chat-inputbar { display:flex; gap:10px; margin-top:12px; }
+.chat-inputbar input { flex:1; }
+
+.msg { display:flex; margin:10px 0; }
+.msg .bubble {
+  max-width:78%;
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:#fff;
+}
+.msg.user { justify-content:flex-end; }
+.msg.user .bubble {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color:#fff; border:none;
+}
+.msg.ai .bubble { background:#ffffff; }
+.msg .meta { font-size:12px; color:var(--muted); margin:0 8px; }
+
+
+
+.typing {
+  display:inline-block; width:34px; height:10px;
+  background:repeating-linear-gradient(90deg,#e5e7eb 0 6px,#fff 6px 12px);
+  border-radius:6px; animation:blink 1s infinite;
+}
+@keyframes blink { 50% { opacity:.5 } }
+
+/* =============== 侧栏看板 =============== */
+.side { height:640px; display:flex; flex-direction:column; gap:12px; }
+.side .panel {
+  background:#fff; border:1px solid var(--border);
+  border-radius:12px; padding:12px;
+}
+.kv { display:grid; grid-template-columns:100px 1fr; gap:6px;
+      font-size:13px; color:#334155; }
+.badge {
+  display:inline-block; padding:2px 8px;
+  border-radius:999px; background:#eef2ff;
+  color:#4338ca; border:1px solid #c7d2fe; font-size:12px;
+}
+.table { width:100%; border-collapse:collapse; font-size:13px; }
+.table th, .table td {
+  padding:8px; border-bottom:1px dashed #e5e7eb; text-align:left;
+}
+.table th { color:#475569; font-weight:600; }
+
+/* =============== 助手徽章 =============== */
+.assistant-chip {
+  display:inline-flex; align-items:center; gap:8px;
+  padding:6px 10px; border-radius:999px;
+  background:#ffffff; border:1px solid var(--border);
+  box-shadow:0 6px 18px rgba(124,58,237,.08);
+}
+.assistant-chip .avatar {
+  width:18px; height:18px; border-radius:50%;
+  background:linear-gradient(135deg, var(--accent), var(--accent2));
+  color:#fff; display:flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:700;
+}
+.assistant-chip .label { font-weight:600; }
+
+/* =============== 响应式调整 =============== */
+@media (max-width:1080px){ .chat-grid{ grid-template-columns:1fr } }
+@media (max-width:960px){
+  .grid{ grid-template-columns:repeat(2,1fr) }
+  .grid-2{ grid-template-columns:1fr }
+}
+
+.page{display:flex;gap:16px;padding:16px}
+.left-panel{flex:0 0 360px}
+.right-panel{flex:1;display:flex;flex-direction:column}
+.card{background:#fff;border:1px solid #eee;border-radius:12px;padding:12px;margin-bottom:12px}
+.row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed #eee}
+.row:last-child{border-bottom:none}
+.mini{width:100%;border-collapse:collapse;margin-top:6px}
+.mini th,.mini td{border:1px solid #eee;padding:6px;text-align:left}
+.chat-box{flex:1;overflow:auto;background:#fafafa;border:1px solid #eee;border-radius:12px;padding:12px}
+.bubble{background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:8px 10px;margin:8px 0}
+.bubble.me{background:#e9f3ff;border-color:#bcd6ff}
+.composer{display:flex;gap:8px;margin-top:8px}
+.composer input{flex:1;padding:10px;border:1px solid #ddd;border-radius:10px}
+.composer button{padding:10px 16px;border:0;border-radius:10px;background:#2a6df4;color:#fff;cursor:pointer}

@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AuroraFin · 投研助手 Lumen</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  
+</head>
+
+<style>
+  /* —— 聊天气泡：长行断开、不出框 —— */
+  .msg .bubble{
+    max-width: calc(100% - 120px);   /* 预留头像/边距，可按需调 */
+    word-break: break-word;          /* 单词/长数字可断开 */
+    overflow-wrap: anywhere;         /* 任何位置都能换行 */
+    white-space: pre-wrap;           /* 保留换行 \n */
+  }
+
+  /* —— Markdown 区域用正常排版（否则 pre-wrap 会“吃掉”列表缩进） —— */
+  .msg .bubble .markdown-content{
+    white-space: normal;             /* 列表/段落按浏览器默认排版 */
+  }
+
+  /* —— 列表的缩进与间距 —— */
+  .msg .bubble .markdown-content ul,
+  .msg .bubble .markdown-content ol{
+    margin: 0 0 8px 1.2em;
+    padding-left: 1.2em;             /* 显示小圆点或序号 */
+    list-style-position: outside;
+  }
+  .msg .bubble .markdown-content li{ margin: 4px 0; }
+
+  /* —— 代码块/表格/图片不出框 —— */
+  .msg .bubble pre,
+  .msg .bubble code{ white-space: pre-wrap; overflow:auto; max-width:100%; display:block; }
+  .msg .bubble table{ width: auto;max-width:100%; display:block; overflow:auto; }
+  .msg .bubble th,.msg .bubble td{border: 1px solid #ddd;padding: 4px 8px;white-space: nowrap;/* 表格内容不换行 */}
+  .msg .bubble img{ max-width:100%; height:auto; }
+  /* 确保所有其他内容正常换行 */
+  .msg .bubble {white-space: normal;line-height: 1.5;}
+  /* —— 分割线样式优化 —— */
+.msg .bubble hr {
+  margin: 20px 0;           /* 确保分割线上下有足够间距 */
+  border: none;            /* 清除默认边框 */
+  border-top: 1px solid #e0e0e0;  /* 添加自定义分割线 */
+  height: 1px;             /* 设置明确高度 */
+  background: none;        /* 清除背景 */
+}
+
+/* —— 确保分割线在Markdown内容中正确显示 —— */
+.msg .bubble .markdown-content hr {
+  margin: 20px 0;
+  border: none;
+  border-top: 1px solid #e0e0e0;
+  background: none;
+}
+
+/* —— 处理分割线前后的空行问题 —— */
+.msg .bubble .markdown-content p + hr,
+.msg .bubble .markdown-content ul + hr,
+.msg .bubble .markdown-content ol + hr,
+.msg .bubble .markdown-content pre + hr {
+  margin-top: 24px;        /* 增加上方间距 */
+}
+
+.msg .bubble .markdown-content hr + p,
+.msg .bubble .markdown-content hr + ul,
+.msg .bubble .markdown-content hr + ol,
+.msg .bubble .markdown-content hr + pre {
+  margin-top: 24px;        /* 增加下方间距 */
+}
+</style>
+
+<body>
+  <!-- 顶部品牌栏 -->
+  <header class="app-header brand">
+    <div class="container" style="display:flex;align-items:center;justify-content:space-between">
+      <div class="brand-logo">
+        <span class="mark"></span>
+        <div>
+          <div class="name">AuroraFin · 投研助手</div>
+          <div class="sub">Lumen（露曼 / 启光）</div>
+        </div>
+      </div>
+      <div class="assistant-chip">
+        <span class="avatar">L</span>
+        <span class="label">Lumen</span>
+        <span style="font-size:12px;color:#64748b">Quant Research Assistant</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主体内容 -->
+  <main class="container">
+    <div class="chat-grid">
+      <!-- 聊天主区 -->
+      <section class="card chat-card">
+        <div class="actions" style="margin-top:0">
+          <label class="inline">
+            <input type="checkbox" id="use_deepseek" checked /> 使用 DeepSeek
+          </label>
+        </div>
+
+        <div id="chat-box" class="chat-scroll"></div>
+
+        <div class="chat-inputbar">
+          <input id="chat-input" type="text" autocomplete="off"
+            placeholder="问我：当前市场风险如何？或输入“你好”让我自我介绍" />
+          <button class="btn primary brand" id="send">发送</button>
+        </div>
+      </section>
+
+      <!-- 右侧看板 -->
+      <aside class="side">
+        <div class="panel">
+          <h3 style="margin:0 0 8px; display:flex; align-items:center; gap:8px">
+            <span class="brand-gradient" style="width:10px;height:10px;border-radius:999px"></span>
+            当前风险
+          </h3>
+          <div id="risk-pill" class="risk-pill">
+            <span class="risk-dot"></span><span id="risk-text">-</span>
+          </div>
+          <div class="kv" style="margin-top:10px">
+            <div>VaR95</div><div id="kv-var">-</div>
+            <div>日期</div><div id="kv-date">-</div>
+            <div>规则</div>
+            <div>
+              <span class="badge">单笔≤0.8%</span>
+              <span class="badge">浮亏≥1.5%减半</span>
+              <span class="badge">回撤≥2.5%全平</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3 style="margin:0 0 8px">关键信号</h3>
+          <table class="table">
+            <thead><tr><th>指标</th><th>值</th></tr></thead>
+            <tbody>
+              <tr><td>RSI14</td><td id="sig-rsi">-</td></tr>
+              <tr><td>MACD</td><td id="sig-macd">-</td></tr>
+              <tr><td>布林区位</td><td id="sig-bbpos">-</td></tr>
+              <tr><td>20日动量</td><td id="sig-slope">-</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="panel">
+          <h3 style="margin:0 0 8px">候选池（Top 8）</h3>
+          <table class="table">
+            <thead><tr><th>标的</th><th>score</th><th>m20</th></tr></thead>
+            <tbody id="cand-body">
+              <tr><td colspan="3" style="color:#94a3b8">暂无</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="app-footer">© AuroraFin · Lumen</footer>
+
+  <!-- 页面脚本 -->
+  <script>
+    const box = document.getElementById('chat-box');
+    const input = document.getElementById('chat-input');
+    const btn = document.getElementById('send');
+    const msgs = [];
+
+    // --- 配置marked.js ---
+    marked.setOptions({
+      breaks: true, // 允许换行
+      gfm: true,    // 启用GitHub风格的Markdown
+      sanitize: false // 不清理HTML（因为我们信任后端返回的内容）
+    });
+
+    // --- 聊天气泡 ---
+  function bubble(role, content) {
+    const row = document.createElement('div');
+    row.className = 'msg ' + (role === 'user' ? 'user' : 'ai');
+
+    const b = document.createElement('div');
+    b.className = 'bubble';
+
+    if (role === 'ai' && content) {
+      // AI 回复：用 Markdown 渲染到一个容器里
+      const markdownContent = document.createElement('div');
+      markdownContent.className = 'markdown-content';
+      markdownContent.innerHTML = marked.parse(content);
+      b.appendChild(markdownContent);
+    } else {
+      // 用户消息或纯文本：保持换行
+      b.innerHTML = (content || '').replace(/\n/g, '<br/>');
+    }
+
+    row.appendChild(b);
+    document.getElementById('chat-box').appendChild(row);
+    const box = document.getElementById('chat-box');
+    box.scrollTop = box.scrollHeight;
+  }
+
+
+    function typingOn() {
+      const row = document.createElement('div');
+      row.className = 'msg ai'; row.id = 'typing';
+      row.innerHTML = '<div class="bubble"><span class="typing"></span></div>';
+      box.appendChild(row); box.scrollTop = box.scrollHeight;
+    }
+
+    function typingOff() {
+      const t = document.getElementById('typing'); if (t) t.remove();
+    }
+
+    // --- 看板渲染 ---
+    function setRisk(color, v95, date) {
+      const pill = document.getElementById('risk-pill');
+      const dot = pill.querySelector('.risk-dot');
+      dot.className = 'risk-dot';
+      if (color === 'GREEN') dot.classList.add('green');
+      if (color === 'YELLOW') dot.classList.add('yellow');
+      if (color === 'RED') dot.classList.add('red');
+      document.getElementById('risk-text').innerText = color || '-';
+      document.getElementById('kv-var').innerText = (typeof v95 === 'number') ? (v95 * 100).toFixed(2) + '%' : '-';
+      document.getElementById('kv-date').innerText = date || '-';
+    }
+
+    function setSignals(s) {
+      if (!s) return;
+      if (s.rsi14 != null) document.getElementById('sig-rsi').innerText = Number(s.rsi14).toFixed(1);
+      if (s.macd != null) document.getElementById('sig-macd').innerText = Number(s.macd).toFixed(4);
+      if (s.bb_pos != null) document.getElementById('sig-bbpos').innerText = (Number(s.bb_pos) * 100).toFixed(0) + '%';
+      if (s.trend_slope20 != null) document.getElementById('sig-slope').innerText = (Number(s.trend_slope20) * 100).toFixed(2) + '%';
+    }
+
+    function setCandidates(cands) {
+      const body = document.getElementById('cand-body');
+      body.innerHTML = '';
+      if (!cands || cands.length === 0) {
+        body.innerHTML = '<tr><td colspan="3" style="color:#94a3b8">暂无</td></tr>';
+        return;
+      }
+      for (const c of cands.slice(0, 8)) {
+        const tr = document.createElement('tr');
+        const name = (c.symbol || '-') + (c.name ? ' · ' + c.name : '');
+        const m20 = (typeof c.mom_20 === 'number') ? (c.mom_20 * 100).toFixed(1) + '%' : '-';
+        tr.innerHTML = `<td>${name}</td><td>${(c.score ?? 0).toFixed(2)}</td><td>${m20}</td>`;
+        body.appendChild(tr);
+      }
+    }
+
+    // --- 发送逻辑 ---
+    async function send() {
+      const text = input.value.trim();
+      if (!text) return;
+      msgs.push({ role: 'user', content: text });
+      bubble('user', text);
+      input.value = '';
+
+      typingOn();
+      try {
+        const resp = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: msgs,
+            use_deepseek: document.getElementById('use_deepseek').checked
+          })
+        });
+        const out = await resp.json();
+        typingOff();
+        if (!out.ok) { bubble('ai', out.msg || '暂时无法生成回复'); return; }
+        bubble('ai', out.reply);
+        msgs.push({ role: 'assistant', content: out.reply });
+
+        const ctx = out.context || {};
+        setRisk(ctx.risk_light, ctx.v95_drawdown, ctx.asof);
+        setSignals(ctx.signals);
+        setCandidates(ctx.candidates);
+      } catch (e) {
+        typingOff();
+        bubble('ai', '出错：' + e);
+      }
+    }
+
+    btn.addEventListener('click', send);
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
+
+    // --- 首次欢迎 ---
+    window.addEventListener('DOMContentLoaded', () => {
+      bubble('ai',
+        '你好，我是 <b>Lumen</b>（AuroraFin 的量化投研助手）📈<br/>' +
+        '我基于“风险灯 / VaR95 / 技术指标 / 候选池”生成自然语言策略和风控建议。<br/>' +
+        '你可以问我：<br/>· 当前市场风险如何？<br/>· 给我两只值得关注的股票？'
+      );
+    });
+  </script>
+</body>
+</html>

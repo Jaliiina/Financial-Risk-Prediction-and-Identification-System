@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AuroraFin｜风险预测与投研平台</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+
+<style>
+  :root {
+    --bg:#f7f9fb;
+    --card:#ffffff;
+    --muted:#5b6b7a;
+    --brand:#3b6af7;
+    --ok:#38b17a;
+    --warn:#ffb54c;
+    --risk:#f45b5b;
+  }
+  body {
+    background:var(--bg);
+    color:#1d2b3a;
+    font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+  }
+  .app-header {
+    padding:28px 20px;
+    text-align:center;
+    background:linear-gradient(135deg,#e9f0ff,#f7f9fb);
+    border-bottom:1px solid #dce3ed;
+  }
+  .app-header h1 {
+    margin:0;
+    font-weight:700;
+    color:#203050;
+  }
+  .app-header p {
+    margin:6px 0 0;
+    font-size:14px;
+    color:var(--muted);
+  }
+  .container {
+    max-width:1100px;
+    margin:0 auto;
+    padding:16px;
+  }
+  .card {
+    background:var(--card);
+    border:1px solid #e3e7ee;
+    border-radius:12px;
+    padding:16px;
+    box-shadow:0 4px 12px rgba(0,0,0,.05);
+  }
+  /* 置信度面板样式优化 */
+  .confidence-panel {
+      background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 12px;
+  }
+
+  .confidence-meter {
+      position: relative;
+  }
+
+  .confidence-bar {
+      position: relative;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  .confidence-bar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 60%;
+      width: 1px;
+      height: 100%;
+      background: rgba(0,0,0,0.1);
+  }
+
+  .confidence-bar::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 80%;
+      width: 1px;
+      height: 100%;
+      background: rgba(0,0,0,0.1);
+  }
+  /* 多任务面板样式 */
+  .multi-task-panel {
+      background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 16px;
+  }
+
+  .metric-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+
+  .metric-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  .trend-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+  }
+
+  .trend-up { background: #dcfce7; color: #166534; }
+  .trend-down { background: #fee2e2; color: #991b1b; }
+  .trend-neutral { background: #fef3c7; color: #92400e; }
+  /* 指标卡片样式 */
+  .metric-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+      transition: all 0.3s ease;
+  }
+
+  .metric-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  .metric-value {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 4px 0;
+  }
+
+  .metric-label {
+      font-size: 11px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+  }
+
+  /* 性能评级颜色 */
+  .rating-excellent { color: #16a34a; }
+  .rating-good { color: #22c55e; }
+  .rating-fair { color: #f59e0b; }
+  .rating-poor { color: #ef4444; }
+
+  .grid {
+    display:grid;
+    grid-template-columns:1fr;
+    gap:16px;
+  }
+  @media (min-width:960px){ .grid{ grid-template-columns:1.2fr .8fr; } }
+  .hero {
+    background:linear-gradient(135deg,#f5f9ff,#f9fcff);
+    border:1px solid #d9e4ff;
+  }
+  .badge {
+    display:inline-block;
+    padding:4px 10px;
+    font-size:12px;
+    color:#fff;
+    background:var(--brand);
+    border-radius:999px;
+    font-weight:700;
+    letter-spacing:.3px;
+  }
+  .btn {
+    appearance:none;
+    border:1px solid #c3d3f9;
+    background:var(--brand);
+    color:#fff;
+    padding:8px 14px;
+    border-radius:8px;
+    cursor:pointer;
+    transition:.2s ease;
+  }
+  .btn:hover {
+    background:#2556f5;
+    transform:translateY(-1px);
+  }
+  .muted{ color:var(--muted); }
+  .kv{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;}
+  .kv span{
+    background:#f2f5fb;
+    padding:6px 10px;
+    border:1px solid #e0e4eb;
+    border-radius:8px;
+    font-size:12px;
+    color:#485667;
+  }
+
+  .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;border:1px solid #e2e8f0;background:#fff;color:#334155;}
+  .pill.red{border-color:#fecaca;background:#fee2e2;color:#b91c1c;}
+  .pill.yellow{border-color:#fde68a;background:#fef3c7;color:#92400e;}
+  .pill.green{border-color:#bbf7d0;background:#dcfce7;color:#065f46;}
+  .tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:12px;}
+  .tag.bad{background:#fee2e2;color:#991b1b;}
+  .tag.good{background:#dcfce7;color:#065f46;}
+
+</style>
+
+</head>
+<body>
+  <!-- 品牌头部：与 chat.html 视觉统一（不改栏目/网格结构） -->
+<header class="app-header brand">
+  <div class="container" style="text-align:center;">
+    <div class="brand-logo" style="flex-direction:column;align-items:center;">
+      <span class="mark" style="margin-bottom:8px;"></span>
+      <div>
+        <div class="name" 
+             style="font-size:22px;font-weight:700;color:#0f172a;letter-spacing:0.5px;">
+          AuroraFin｜智能金融风险预警与投研平台
+        </div>
+        <div class="sub" 
+             style="font-size:13px;color:#64748b;margin-top:4px;">
+          LSTM 分位回归 · 风险灯 · VaR95 · 技术指标面板 · 投研建议
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+
+
+  <main class="container">
+    <!-- 原有布局：参数设置 + 行为按钮（未改排版，仅样式对齐） -->
+    <section class="card">
+      <h2 style="margin-top:0">参数设置</h2>
+      <form id="form-params">
+        <div class="grid">
+          <label>
+            <span>数据文件路径</span>
+            <input type="text" name="csv_path" value="{{ csv_path }}" />
+          </label>
+          <label>
+            <span>模型权重路径</span>
+            <input type="text" name="model_path" value="{{ model_path }}" />
+          </label>
+          <label>
+            <span>标准化器路径</span>
+            <input type="text" name="scaler_path" value="{{ scaler_path }}" />
+          </label>
+          <label>
+            <span>窗口长度</span>
+            <input type="number" min="30" max="120" step="5" name="lookback" value="{{ lookback }}" />
+          </label>
+          <label>
+            <span>分位 α</span>
+            <input type="number" min="0.01" max="0.10" step="0.005" name="alpha" value="{{ alpha }}" />
+          </label>
+          <label>
+            <span>黄灯阈值</span>
+            <input type="number" min="0.005" max="0.050" step="0.001" name="tau_y" value="{{ tau_y }}" />
+          </label>
+          <label>
+            <span>红灯阈值</span>
+            <input type="number" min="0.010" max="0.100" step="0.001" name="tau_r" value="{{ tau_r }}" />
+          </label>
+        </div>
+        <div class="actions">
+            <button type="button" id="btn-run" class="btn primary brand">运行推理</button>
+          <button type="button" id="btn-note" class="btn">生成投研建议</button>
+            <button type="button" id="btn-causality" class="btn">生成因果关系报告</button>
+          <label class="inline">
+            <input type="checkbox" id="use_deepseek" checked /> 使用 DeepSeek 投研助手
+          </label>
+          <button type="button" id="btn-chat" class="btn brand">投研助手</button>
+        </div>
+      </form>
+      <div id="status" class="status"></div>
+      <div class="risk-light" id="risk-light">
+        <span class="dot" id="dot-green"></span>
+        <span class="dot" id="dot-yellow"></span>
+        <span class="dot" id="dot-red"></span>
+        <span id="risk-text">当前风险：-</span>
+      </div>
+    </section>
+
+    <!-- 特征因果关系报告面板 -->
+    <section class="card" id="causality-panel" style="margin-top:16px; display:block;">
+      <h2 style="margin-top:0">📈 特征因果关系报告</h2>
+      <div style="margin-bottom:8px; display:flex; gap:8px; align-items:center; justify-content:space-between;">
+        <div>
+          <button id="btn-download-causality" class="btn" disabled>下载报告 (JSON)</button>
+          <span id="causality-summary" style="color:#64748b;font-size:13px;margin-left:12px">点击“生成因果关系报告”以查看结果</span>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <label style="font-size:13px;color:#64748b;">显示：</label>
+          <select id="causality-filter" style="padding:6px;border-radius:6px;border:1px solid #e2e8f0;" disabled>
+            <option value="all">全部</option>
+            <option value="通过检验">通过检验</option>
+            <option value="不稳定">不稳定</option>
+            <option value="无效">无效</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; align-items:start;">
+        <div style="background:#fff;padding:8px;border-radius:8px;border:1px solid #e6eef9;">
+          <h4 style="margin:0 0 8px 0">Top 特征 (按通过比例)</h4>
+          <div id="causality-chart" style="height:320px;"></div>
+        </div>
+        <div style="background:#fff;padding:8px;border-radius:8px;border:1px solid #e6eef9;overflow:auto;max-height:360px;">
+          <h4 style="margin:0 0 8px 0">详细结果</h4>
+          <table id="tbl-causality" style="width:100%; border-collapse:collapse; font-size:13px;">
+            <thead>
+              <tr>
+                <th style="text-align:left;padding:8px;border-bottom:1px solid #eef2f7;">特征</th>
+                <th style="text-align:left;padding:8px;border-bottom:1px solid #eef2f7;">最佳滞后 (lag)</th>
+                <th style="text-align:right;padding:8px;border-bottom:1px solid #eef2f7;">最小 p-value</th>
+                <th style="text-align:right;padding:8px;border-bottom:1px solid #eef2f7;">通过 / 总窗口</th>
+                <th style="text-align:center;padding:8px;border-bottom:1px solid #eef2f7;">结论</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 在图表部分替换原有的收益分位图 -->
+    <section class="stack" style="display:grid; gap:16px; grid-template-columns:1fr; margin-top:16px">
+      <div class="card">
+        <h2 style="margin-top:0">收盘价走势</h2>
+        <div id="plot-price" class="plot"></div>
+      </div>
+      <div class="card">
+        <h2 style="margin-top:0">多分位预测与风险带</h2>
+        <div id="plot-quantiles" class="plot"></div>
+      </div>
+      <div class="card">
+        <h2 style="margin-top:0">风险指标时序</h2>
+        <div id="plot-risk-metrics" class="plot"></div>
+      </div>
+    </section>
+<!-- 多任务分析面板 -->
+    <section class="card" style="margin-top:16px">
+      <h2 style="margin-top:0">🎯 多任务分析面板</h2>
+      
+      <!-- 风险带与方向指示 -->
+      <div class="card" style="margin-bottom:16px;background:linear-gradient(135deg, #f8fafc, #f1f5f9);">
+        <h3 style="margin-top:0;color:#1e293b;">📊 风险带与趋势方向</h3>
+        <div id="multi-task-chart" style="height:400px;"></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+        <!-- 波动率分析 -->
+        <div class="metric-card" style="text-align:center;padding:16px;">
+          <div style="font-size:12px;color:#64748b;margin-bottom:8px;">📈 当前波动率</div>
+          <div id="current-volatility" style="font-size:24px;font-weight:700;color:#3b82f6;">--</div>
+          <div id="volatility-trend" style="font-size:11px;margin-top:4px;">--</div>
+        </div>
+
+        <!-- 趋势状态 -->
+        <div class="metric-card" style="text-align:center;padding:16px;">
+          <div style="font-size:12px;color:#64748b;margin-bottom:8px;">🎯 趋势方向</div>
+          <div id="trend-direction" style="font-size:24px;font-weight:700;">--</div>
+          <div id="trend-strength" style="font-size:11px;margin-top:4px;">--</div>
+        </div>
+
+        <!-- 风险等级 -->
+        <div class="metric-card" style="text-align:center;padding:16px;">
+          <div style="font-size:12px;color:#64748b;margin-bottom:8px;">⚡ 风险等级</div>
+          <div id="risk-level" style="font-size:24px;font-weight:700;">--</div>
+          <div id="risk-description" style="font-size:11px;margin-top:4px;">--</div>
+        </div>
+      </div>
+
+      <!-- 多任务指标时间序列 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
+        <div class="card">
+          <h4 style="margin-top:0;">📈 波动率时序 (σ)</h4>
+          <div id="volatility-chart" style="height:200px;"></div>
+        </div>
+        <div class="card">
+          <h4 style="margin-top:0;">🎯 趋势强度</h4>
+          <div id="trend-chart" style="height:200px;"></div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- 添加解释性面板 -->
+    <section class="card" style="margin-top:16px">
+      <h2 style="margin-top:0">🎯 模型可解释性分析</h2>
+      <div id="shap-panel" style="display: none;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start;">
+          <!-- SHAP图表 -->
+          <div>
+            <h3 style="margin-bottom: 12px; font-size: 16px;">Top 5 风险因子贡献度</h3>
+            <div id="shap-plot" style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <!-- SHAP图表将在这里显示 -->
+            </div>
+          </div>
+          
+          <!-- 特征解释表格 -->
+          <div>
+            <h3 style="margin-bottom: 12px; font-size: 16px;">特征贡献度详情</h3>
+            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <table id="shap-table" style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                <thead>
+                  <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <th style="text-align: left; padding: 8px;">特征</th>
+                    <th style="text-align: right; padding: 8px;">SHAP值</th>
+                    <th style="text-align: left; padding: 8px;">影响</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- 特征数据将通过JavaScript填充 -->
+                </tbody>
+              </table>
+            </div>
+            
+            <!-- 解释说明 -->
+            <div style="margin-top: 12px; padding: 12px; background: #fff7ed; border-radius: 6px; border: 1px solid #fed7aa;">
+              <h4 style="margin: 0 0 6px 0; font-size: 13px; color: #9a3412;">📊 如何解读</h4>
+              <ul style="margin: 0; padding-left: 16px; font-size: 11px; color: #7c2d12; line-height: 1.4;">
+                <li><strong>SHAP值</strong>：表示特征对本次风险预测的贡献程度</li>
+                <li><strong>正值</strong>：增加风险预测值（更危险）</li>
+                <li><strong>负值</strong>：降低风险预测值（更安全）</li>
+                <li>绝对值越大，影响力越强</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="shap-placeholder" style="text-align: center; padding: 40px; color: var(--muted);">
+        <div>运行推理后显示特征重要性分析</div>
+        <div style="font-size: 12px; margin-top: 8px;">基于SHAP (SHapley Additive exPlanations) 分析</div>
+      </div>
+    </section>
+
+
+    <!-- 修改预测表格，增加多分位和风险指标列 -->
+    <section class="card" style="margin-top:16px">
+      <h2 style="margin-top:0">最近 10 次多分位预测</h2>
+      <div style="overflow:auto">
+        <table id="tbl-last10" style="width:100%; border-collapse:collapse; font-size:12px;">
+          <thead>
+            <tr>
+              <th style="text-align:left; padding:8px; border-bottom:1px solid #e2e8f0;">预测基准日</th>
+              <th style="text-align:left; padding:8px; border-bottom:1px solid #e2e8f0;">目标日</th>
+              <th style="text-align:right; padding:8px; border-bottom:1px solid #e2e8f0;">q01</th>
+              <th style="text-align:right; padding:8px; border-bottom:1px solid #e2e8f0;">q05</th>
+              <th style="text-align:right; padding:8px; border-bottom:1px solid #e2e8f0;">q50</th>
+              <th style="text-align:right; padding:8px; border-bottom:1px solid #e2e8f0;">q95</th>
+              <th style="text-align:right; padding:8px; border-bottom:1px solid #e2e8f0;">q99</th>
+              <th style="text-align:right; padding:8px; border-bottom:1px solid #e2e8f0;">VaR95</th>
+              <th style="text-align:right; padding:8px; border-bottom:1px solid #e2e8f0;">CVaR95</th>
+              <th style="text-align:right; padding:8px; border-bottom:1px solid #e2e8f0;">机会区间</th>
+              <th style="text-align:center; padding:8px; border-bottom:1px solid #e2e8f0;">风险灯</th>
+              <th style="text-align:right; padding:8px; border-bottom:1px solid #e2e8f0;">实际收益</th>
+              <th style="text-align:center; padding:8px; border-bottom:1px solid #e2e8f0;">超损</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+    
+    <!-- 在风险灯显示后添加置信度面板 -->
+    <section class="card" style="margin-top: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="margin: 0;">模型置信度评估</h3>
+        <a href="/validation" class="btn" style="padding: 6px 12px; font-size: 12px;">详细验证报告</a>
+      </div>
+      
+      <div id="confidence-panel" class="confidence-panel">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 12px;">
+          <!-- 置信度进度条 -->
+          <div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span style="font-size: 13px; color: var(--muted);">预测置信度</span>
+              <span id="confidence-score" style="font-size: 14px; font-weight: 600;">--</span>
+            </div>
+            <div class="confidence-meter">
+              <div class="confidence-bar" style="height: 12px; background: #e2e8f0; border-radius: 6px; overflow: hidden; position: relative;">
+                <div id="confidence-fill" style="height: 100%; background: linear-gradient(90deg, #ef4444, #f59e0b, #16a34a); border-radius: 6px; width: 0%; transition: width 0.5s ease;"></div>
+                <!-- 参考线 -->
+                <div style="position: absolute; left: 60%; top: 0; bottom: 0; width: 1px; background: rgba(0,0,0,0.2);"></div>
+                <div style="position: absolute; left: 80%; top: 0; bottom: 0; width: 1px; background: rgba(0,0,0,0.2);"></div>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-top: 4px;">
+                <span style="font-size: 11px; color: #94a3b8;">低</span>
+                <span style="font-size: 11px; color: #94a3b8;">中</span>
+                <span style="font-size: 11px; color: #94a3b8;">高</span>
+              </div>
+            </div>
+            <div id="confidence-desc" style="margin-top: 8px; font-size: 12px; text-align: center;"></div>
+          </div>
+          
+          <!-- 多分位覆盖率指标 -->
+          <div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <div style="text-align: center; padding: 8px; background: #f8fafc; border-radius: 6px;">
+                <div style="font-size: 11px; color: var(--muted);">q05 覆盖率</div>
+                <div id="coverage-q05" style="font-size: 16px; font-weight: 600; margin-top: 4px;">--</div>
+              </div>
+              <div style="text-align: center; padding: 8px; background: #f8fafc; border-radius: 6px;">
+                <div style="font-size: 11px; color: var(--muted);">综合偏差</div>
+                <div id="overall-bias" style="font-size: 16px; font-weight: 600; margin-top: 4px;">--</div>
+              </div>
+              <div style="text-align: center; padding: 8px; background: #f8fafc; border-radius: 6px;">
+                <div style="font-size: 11px; color: var(--muted);">性能评级</div>
+                <div id="performance-rating" style="font-size: 16px; font-weight: 600; margin-top: 4px;">--</div>
+              </div>
+              <div style="text-align: center; padding: 8px; background: #f8fafc; border-radius: 6px;">
+                <div style="font-size: 11px; color: var(--muted);">验证周期</div>
+                <div id="validation-periods" style="font-size: 16px; font-weight: 600; margin-top: 4px;">--</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 原有投研建议区保持结构不变 -->
+    <section class="card" style="margin-top:16px">
+      <h2 style="margin-top:0">投研建议</h2>
+      <div id="note" class="note md"></div>
+    </section>
+  </main>
+
+  <footer class="app-footer">© AuroraFin · Lumen</footer>
+
+  <script>
+    function readForm() {
+      const form = document.getElementById('form-params');
+      const data = new FormData(form);
+      return {
+        csv_path: data.get('csv_path'),
+        model_path: data.get('model_path'),
+        scaler_path: data.get('scaler_path'),
+        lookback: Number(data.get('lookback')),
+        alpha: Number(data.get('alpha')),
+        tau_y: Number(data.get('tau_y')),
+        tau_r: Number(data.get('tau_r')),
+      };
+    }
+
+    function setRiskLight(color) {
+      const g = document.getElementById('dot-green');
+      const y = document.getElementById('dot-yellow');
+      const r = document.getElementById('dot-red');
+      g.classList.remove('on'); y.classList.remove('on'); r.classList.remove('on');
+      if (color === 'GREEN') g.classList.add('on');
+      if (color === 'YELLOW') y.classList.add('on');
+      if (color === 'RED') r.classList.add('on');
+      document.getElementById('risk-text').innerText = '当前风险：' + (color || '-');
+    }
+    // 添加置信度相关函数
+    function updateConfidenceDisplay(confidenceData) {
+        const confidencePanel = document.getElementById('confidence-panel');
+        const confidenceFill = document.getElementById('confidence-fill');
+        const confidenceScore = document.getElementById('confidence-score');
+        const confidenceDesc = document.getElementById('confidence-desc');
+        
+        // 覆盖率指标元素
+        const coverageQ05 = document.getElementById('coverage-q05');
+        const overallBias = document.getElementById('overall-bias');
+        const performanceRating = document.getElementById('performance-rating');
+        const validationPeriods = document.getElementById('validation-periods');
+        
+        if (confidencePanel && confidenceData) {
+            confidencePanel.style.display = 'block';
+            
+            // 安全地获取置信度值
+            const confidenceValue = confidenceData.confidence_score || 0;
+            confidenceFill.style.width = (confidenceValue * 100) + '%';
+            confidenceScore.textContent = (confidenceValue * 100).toFixed(1) + '%';
+            
+            // 根据置信度设置描述文字和颜色
+            if (confidenceValue >= 0.8) {
+                confidenceDesc.textContent = '✅ 高可靠性 - 模型预测稳定可靠';
+                confidenceDesc.style.color = '#16a34a';
+            } else if (confidenceValue >= 0.6) {
+                confidenceDesc.textContent = '⚠️ 中等可靠性 - 建议结合其他指标';
+                confidenceDesc.style.color = '#f59e0b';
+            } else {
+                confidenceDesc.textContent = '❌ 需要验证 - 模型表现不稳定';
+                confidenceDesc.style.color = '#ef4444';
+            }
+            
+            // 安全地更新多分位覆盖率指标
+            if (confidenceData.coverage_report && confidenceData.coverage_report.q05) {
+                const q05Coverage = confidenceData.coverage_report.q05.actual || 0;
+                coverageQ05.textContent = (q05Coverage * 100).toFixed(1) + '%';
+                
+                // 设置颜色指示
+                const targetCoverage = 0.05; // VaR95的目标覆盖率
+                const coverageBias = Math.abs(q05Coverage - targetCoverage);
+                if (coverageBias <= 0.005) {
+                    coverageQ05.style.color = '#16a34a';
+                } else if (coverageBias <= 0.01) {
+                    coverageQ05.style.color = '#f59e0b';
+                } else {
+                    coverageQ05.style.color = '#ef4444';
+                }
+            } else {
+                coverageQ05.textContent = '--';
+                coverageQ05.style.color = '#94a3b8';
+            }
+            
+            // 安全地更新综合偏差
+            if (confidenceData.overall_bias !== undefined && confidenceData.overall_bias !== null) {
+                overallBias.textContent = (confidenceData.overall_bias * 100).toFixed(2) + '%';
+                overallBias.style.color = confidenceData.overall_bias <= 0.01 ? '#16a34a' : 
+                                        confidenceData.overall_bias <= 0.02 ? '#f59e0b' : '#ef4444';
+            } else {
+                overallBias.textContent = '--';
+                overallBias.style.color = '#94a3b8';
+            }
+            
+            // 安全地更新性能评级
+            if (confidenceData.performance_rating) {
+                performanceRating.textContent = confidenceData.performance_rating;
+                performanceRating.style.color = 
+                    confidenceData.performance_rating === '优秀' ? '#16a34a' :
+                    confidenceData.performance_rating === '良好' ? '#22c55e' :
+                    confidenceData.performance_rating === '一般' ? '#f59e0b' : '#ef4444';
+            } else {
+                performanceRating.textContent = '--';
+                performanceRating.style.color = '#94a3b8';
+            }
+            
+            // 安全地更新验证周期
+            if (confidenceData.total_periods) {
+                validationPeriods.textContent = confidenceData.total_periods;
+            } else {
+                validationPeriods.textContent = '--';
+            }
+        } else {
+            // 如果没有置信度数据，显示默认状态
+            confidencePanel.style.display = 'block';
+            confidenceFill.style.width = '0%';
+            confidenceScore.textContent = '--';
+            confidenceDesc.textContent = '等待推理结果...';
+            confidenceDesc.style.color = '#94a3b8';
+            
+            coverageQ05.textContent = '--';
+            overallBias.textContent = '--';
+            performanceRating.textContent = '--';
+            validationPeriods.textContent = '--';
+            
+            // 设置默认颜色
+            coverageQ05.style.color = '#94a3b8';
+            overallBias.style.color = '#94a3b8';
+            performanceRating.style.color = '#94a3b8';
+        }
+    }
+    // 多任务面板更新函数
+    function updateMultiTaskPanel(multiTaskData) {
+        if (!multiTaskData) {
+            console.log('没有多任务数据');
+            return;
+        }
+
+        // 更新主多任务图表（风险带 + 方向指示）
+        renderMultiTaskChart(multiTaskData);
+        
+        // 更新指标卡片
+        updateMetricCards(multiTaskData);
+        
+        // 更新时序图表
+        renderTimeSeriesCharts(multiTaskData);
+    }
+
+    // 渲染主多任务图表
+    function renderMultiTaskChart(data) {
+        const confidenceBand = data.confidence_band;
+        const trendDirection = data.trend_direction;
+        
+        if (!confidenceBand || !trendDirection) return;
+
+        const dates = confidenceBand.dates.slice(-60); // 最近60个点
+        
+        // 创建风险带 - 使用正确的填充方式
+        const trace1 = {
+            x: dates,
+            y: confidenceBand.upper.slice(-60),
+            name: '95% 分位',
+            line: {color: 'transparent'},
+            showlegend: false,
+            type: 'scatter'
+        };
+
+        const trace2 = {
+            x: dates,
+            y: confidenceBand.lower.slice(-60),
+            name: '5% 分位',
+            line: {color: 'transparent'},
+            fill: 'tonexty',
+            fillcolor: 'rgba(239, 68, 68, 0.1)',
+            showlegend: false,
+            type: 'scatter'
+        };
+        
+        const medianTrace = {
+            x: dates,
+            y: confidenceBand.median.slice(-60),
+            name: '中位数预测',
+            line: {color: '#3b82f6', width: 2},
+            type: 'scatter'
+        };
+        
+        // 趋势方向标记
+        const trendValues = trendDirection.values.slice(-60);
+        const trendTrace = {
+            x: dates,
+            y: trendValues,
+            name: '趋势方向',
+            mode: 'markers',
+            type: 'scatter',
+            marker: {
+                size: 8,
+                color: trendValues.map(val => 
+                    val > 0 ? '#10b981' : (val < 0 ? '#ef4444' : '#f59e0b')
+                ),
+                symbol: trendValues.map(val => 
+                    val > 0 ? 'triangle-up' : (val < 0 ? 'triangle-down' : 'circle')
+                ),
+                line: {width: 1, color: 'white'}
+            }
+        };
+
+        const layout = {
+            height: 400,
+            margin: {l: 50, r: 30, t: 30, b: 40},
+            showlegend: true,
+            legend: {orientation: 'h', y: -0.2},
+            xaxis: {title: '日期'},
+            yaxis: {title: '收益率'},
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            shapes: [
+                // 零线
+                {
+                    type: 'line',
+                    x0: dates[0],
+                    x1: dates[dates.length-1],
+                    y0: 0,
+                    y1: 0,
+                    line: {color: '#94a3b8', width: 1, dash: 'dot'}
+                }
+            ]
+        };
+
+        Plotly.newPlot('multi-task-chart', [trace1, trace2, medianTrace, trendTrace], layout);
+    }
+
+    // 更新指标卡片
+    function updateMetricCards(data) {
+        // 波动率卡片
+        const volatility = data.volatility.values.slice(-1)[0] || 0;
+        document.getElementById('current-volatility').textContent = (volatility * 100).toFixed(2) + '%';
+        
+        const volTrend = getTrendDescription(data.volatility.values.slice(-5));
+        document.getElementById('volatility-trend').textContent = volTrend;
+        document.getElementById('volatility-trend').style.color = 
+            volTrend.includes('上升') ? '#ef4444' : (volTrend.includes('下降') ? '#10b981' : '#f59e0b');
+
+        // 趋势方向卡片
+        const trend = data.trend_direction.values.slice(-1)[0] || 0;
+        const trendText = trend > 0 ? '📈 上涨' : (trend < 0 ? '📉 下跌' : '➡️ 震荡');
+        document.getElementById('trend-direction').textContent = trendText;
+        document.getElementById('trend-direction').style.color = 
+            trend > 0 ? '#10b981' : (trend < 0 ? '#ef4444' : '#f59e0b');
+        
+        const trendStrength = getTrendStrength(data.trend_direction.values.slice(-10));
+        document.getElementById('trend-strength').textContent = trendStrength;
+
+        // 风险等级卡片
+        const risk = data.risk_levels.values.slice(-1)[0] || 0;
+        const riskText = ['🟢 低', '🟡 中', '🔴 高'][risk] || '⚪ 未知';
+        document.getElementById('risk-level').textContent = riskText;
+        document.getElementById('risk-level').style.color = 
+            risk === 0 ? '#10b981' : (risk === 1 ? '#f59e0b' : '#ef4444');
+        
+        const riskDesc = ['市场平稳', '适度关注', '高度警惕'][risk] || '--';
+        document.getElementById('risk-description').textContent = riskDesc;
+    }
+
+    // 渲染时序图表
+    function renderTimeSeriesCharts(data) {
+        // 波动率时序图
+        const volTrace = {
+            x: data.volatility.dates.slice(-30),
+            y: data.volatility.values.slice(-30).map(v => v * 100),
+            name: '波动率 (%)',
+            line: {color: '#8b5cf6', width: 2},
+            fill: 'tozeroy',
+            fillcolor: 'rgba(139, 92, 246, 0.1)'
+        };
+
+        const volLayout = {
+            height: 200,
+            margin: {l: 40, r: 20, t: 20, b: 30},
+            showlegend: false,
+            xaxis: {showgrid: false},
+            yaxis: {title: '%'},
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            paper_bgcolor: 'rgba(0,0,0,0)'
+        };
+
+        Plotly.newPlot('volatility-chart', [volTrace], volLayout);
+
+        // 趋势强度图
+        const trendValues = data.trend_direction.values.slice(-30);
+        const trendTrace = {
+            x: data.trend_direction.dates.slice(-30),
+            y: trendValues,
+            name: '趋势强度',
+            line: {color: '#06b6d4', width: 2},
+            marker: {
+                color: trendValues.map(val => 
+                    val > 0 ? '#10b981' : (val < 0 ? '#ef4444' : '#f59e0b')
+                )
+            }
+        };
+
+        const trendLayout = {
+            height: 200,
+            margin: {l: 40, r: 20, t: 20, b: 30},
+            showlegend: false,
+            xaxis: {showgrid: false},
+            yaxis: {title: '方向'},
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            shapes: [
+                {
+                    type: 'line',
+                    x0: data.trend_direction.dates.slice(-30)[0],
+                    x1: data.trend_direction.dates.slice(-30)[29],
+                    y0: 0,
+                    y1: 0,
+                    line: {color: '#94a3b8', width: 1, dash: 'dot'}
+                }
+            ]
+        };
+
+        Plotly.newPlot('trend-chart', [trendTrace], trendLayout);
+    }
+
+    // 工具函数
+    function getTrendDescription(values) {
+        if (values.length < 2) return '数据不足';
+        const current = values[values.length-1];
+        const previous = values[values.length-2];
+        const change = current - previous;
+        
+        if (Math.abs(change) < 0.001) return '趋于平稳';
+        return change > 0 ? '趋势上升' : '趋势下降';
+    }
+
+    function getTrendStrength(values) {
+        const positives = values.filter(v => v > 0).length;
+        const negatives = values.filter(v => v < 0).length;
+        const total = values.length;
+        
+        if (positives / total > 0.7) return '强势上涨';
+        if (negatives / total > 0.7) return '强势下跌';
+        if (Math.abs(positives - negatives) / total < 0.3) return '震荡整理';
+        return '趋势不明';
+    }
+
+    // 独立的表格渲染函数
+    function renderPredictionTable(rows) {
+        try {
+            const tbody = document.querySelector('#tbl-last10 tbody');
+            if (tbody && rows) {
+                tbody.innerHTML = rows.map(r => {
+                    const riskClass = r.risk_light === 'RED' ? 'red' : (r.risk_light === 'YELLOW' ? 'yellow' : 'green');
+                    const exceedTag = r.exceed ? '<span class="tag bad">是</span>' : '<span class="tag good">否</span>';
+                    return `
+                    <tr>
+                        <td style="padding:6px;border-bottom:1px solid #eef2f7;">${r.base_date}</td>
+                        <td style="padding:6px;border-bottom:1px solid #eef2f7;">${r.target_date}</td>
+                        <td style="padding:6px;border-bottom:1px solid #eef2f7;text-align:right;">${(r.q01).toFixed(4)}</td>
+                        <td style="padding:6px;border-bottom:1px solid #eef2f7;text-align:right;">${(r.q05).toFixed(4)}</td>
+                        <td style="padding:6px;border-bottom:1px solid #eef2f7;text-align:right;">${(r.q50).toFixed(4)}</td>
+                        <td style="padding:6px;border-bottom:1px solid #eef2f7;text-align:right;">${(r.q95).toFixed(4)}</td>
+                        <td style="padding:6px;border-bottom:1px solid #eef2f7;text-align:right;">${(r.q99).toFixed(4)}</td>
+                        <td style="padding:6px;border-bottom:1px solid #eef2f7;text-align:right;">${(r.var95).toFixed(4)}</td>
+                        <td style="padding:6px;border-bottom:1px solid #eef2f7;text-align:right;">${(r.cvar95).toFixed(4)}</td>
+                        <td style="padding:6px;border-bottom:1px solid #eef2f7;text-align:right;">${(r.opportunity_band).toFixed(4)}</td>
+                        <td style="padding:6px;border-bottom:1px solid #eef2f7;text-align:center;">
+                            <span class="pill ${riskClass}">${r.risk_light}</span>
+                        </td>
+                        <td style="padding:6px;border-bottom:1px solid #eef2f7;text-align:right;">${(r.ret1).toFixed(4)}</td>
+                        <td style="padding:6px;border-bottom:1px solid #eef2f7;text-align:center;">${exceedTag}</td>
+                    </tr>`;
+                }).join('');
+            }
+        } catch (e) { 
+            console.warn('表格渲染失败', e); 
+        }
+    }
+    // 添加SHAP显示函数
+    function updateSHAPDisplay(shapAnalysis) {
+        const shapPanel = document.getElementById('shap-panel');
+        const shapPlaceholder = document.getElementById('shap-placeholder');
+        
+        console.log("SHAP分析数据:", shapAnalysis);
+        
+        if (shapAnalysis && shapAnalysis.plot_url) {
+            shapPanel.style.display = 'block';
+            shapPlaceholder.style.display = 'none';
+            
+            // 更新SHAP图表
+            const shapPlot = document.getElementById('shap-plot');
+            shapPlot.innerHTML = `<img src="${shapAnalysis.plot_url}" style="width: 100%; height: auto; border-radius: 4px;" alt="SHAP特征重要性图表">`;
+            
+            // 更新特征表格
+            const shapTable = document.getElementById('shap-table');
+            const tbody = shapTable.querySelector('tbody');
+            tbody.innerHTML = '';
+            
+            shapAnalysis.top_features.forEach(([feature, importance], index) => {
+                const row = document.createElement('tr');
+                row.style.borderBottom = '1px solid #f1f5f9';
+                
+                // 使用后端返回的已翻译特征名称
+                const displayName = shapAnalysis.feature_names ? shapAnalysis.feature_names[index] : feature;
+                const impact = '特征贡献'; // 简化显示
+                const impactClass = importance > 0 ? 'risk' : 'opportunity';
+                
+                row.innerHTML = `
+                    <td style="padding: 8px; font-weight: 500;">${displayName}</td>
+                    <td style="padding: 8px; text-align: right; font-family: monospace; color: ${importance > 0 ? '#ef4444' : '#16a34a'}">
+                        ${importance.toFixed(4)}
+                    </td>
+                    <td style="padding: 8px;">
+                        <span class="tag ${impactClass}">${impact}</span>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+        } else {
+            shapPanel.style.display = 'none';
+            shapPlaceholder.style.display = 'block';
+            console.log("没有可用的SHAP分析数据");
+        }
+    }
+
+    
+    // 修改 runInfer 函数，在成功获取结果后更新置信度显示
+    async function runInfer() {
+      const params = readForm();
+      document.getElementById('status').innerText = '推理中...';
+      setRiskLight(null);
+      
+      // 隐藏面板直到有新数据
+      document.getElementById('confidence-panel').style.display = 'none';
+      document.getElementById('shap-panel').style.display = 'none';
+      document.getElementById('shap-placeholder').style.display = 'block';
+      
+      try {
+          const resp = await fetch('/api/infer', { 
+              method: 'POST', 
+              headers: { 'Content-Type': 'application/json' }, 
+              body: JSON.stringify(params) 
+          });
+          
+          if (!resp.ok) {
+              throw new Error(`HTTP error! status: ${resp.status}`);
+          }
+          
+          const out = await resp.json();
+          
+          if (!out.ok) { 
+              document.getElementById('status').innerText = out.error || out.msg || '推理失败'; 
+              return; 
+          }
+
+          // 显示状态文字
+          let statusHtml = out.status_markdown || '';
+          if (out.anomaly_stats) {
+            statusHtml += `<div style="margin-top:8px;font-size:13px;color:#444;">训练集异常检测：${(out.anomaly_stats.n_anomalies||0)} / ${(out.anomaly_stats.n_train||0)} ( ${(out.anomaly_stats.anomaly_ratio*100||0).toFixed(2)}% )</div>`;
+          }
+          if (out.current_anomaly_stats) {
+            statusHtml += `<div style="margin-top:6px;font-size:13px;color:#444;">最近 ${out.current_anomaly_stats.n_recent} 窗口异常：${out.current_anomaly_stats.n_anomalies_recent} ( ${(out.current_anomaly_stats.anomaly_ratio_recent*100).toFixed(2)}% )</div>`;
+          }
+          document.getElementById('status').innerHTML = statusHtml;
+          
+          // 更新风险灯
+          setRiskLight(out.color);
+          
+          // 更新置信度显示 - 添加错误处理
+          try {
+              if (out.validation_data) {
+                  updateConfidenceDisplay(out.validation_data);
+              } else {
+                  console.warn('没有验证数据');
+                  updateConfidenceDisplay(null); // 显示默认状态
+              }
+          } catch (e) {
+              console.error('置信度显示错误:', e);
+              updateConfidenceDisplay(null);
+          }
+          
+          // 更新SHAP显示
+          if (out.shap_analysis) {
+              updateSHAPDisplay(out.shap_analysis);
+          }
+          if (out.multi_task_data) {
+                updateMultiTaskPanel(out.multi_task_data);
+            }
+          // 更新多任务面板
+          if (out.multi_task_data) {
+              updateMultiTaskPanel(out.multi_task_data);
+          } else {
+              console.log('没有多任务数据');
+          }
+          // 保存验证数据到sessionStorage
+          if (out.validation_data) {
+              sessionStorage.setItem('validationData', JSON.stringify({
+                  returns: out.validation_data.returns,
+                  var_predictions: out.validation_data.var_predictions,
+                  quantile_predictions: out.validation_data.quantile_predictions,
+                  alpha: params.alpha,
+                  validation_data: out.validation_data
+              }));
+          }
+          
+          // 渲染图表和表格
+          if (out.fig_price) {
+              Plotly.newPlot('plot-price', out.fig_price.data, out.fig_price.layout || {});
+          }
+          if (out.fig_quantiles) {
+              Plotly.newPlot('plot-quantiles', out.fig_quantiles.data, out.fig_quantiles.layout || {});
+          }
+          if (out.fig_risk_metrics) {
+              Plotly.newPlot('plot-risk-metrics', out.fig_risk_metrics.data, out.fig_risk_metrics.layout || {});
+          }
+          
+          // 渲染预测表格
+          if (out.rows) {
+              renderPredictionTable(out.rows);
+          }
+          
+      } catch (e) {
+          console.error('推理错误:', e);
+          document.getElementById('status').innerText = '运行出错：' + e.message;
+          // 显示错误状态
+          updateConfidenceDisplay(null);
+      }
+  } 
+
+    async function genNote() {
+      const params = readForm();
+      params.use_deepseek = document.getElementById('use_deepseek').checked;
+      const el = document.getElementById('note');
+      el.innerText = '生成中...';
+      try {
+        const resp = await fetch('/api/note', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(params) });
+        const out = await resp.json();
+        if (!out.ok) { el.innerText = out.msg; return; }
+        el.innerText = out.note_markdown;
+        // 渲染最近10次预测表
+        try {
+          const tbody = document.querySelector('#tbl-last10 tbody');
+          if (tbody) {
+            tbody.innerHTML = (out.rows || []).map(r => {
+              const riskClass = r.risk_light === 'RED' ? 'red' : (r.risk_light === 'YELLOW' ? 'yellow' : 'green');
+              const exceedTag = r.exceed ? '<span class="tag bad">是</span>' : '<span class="tag good">否</span>';
+              return `
+                <tr>
+                  <td style="padding:8px;border-bottom:1px solid #eef2f7;">${r.base_date}</td>
+                  <td style="padding:8px;border-bottom:1px solid #eef2f7;">${r.target_date}</td>
+                  <td style="padding:8px;border-bottom:1px solid #eef2f7;text-align:right;">${(r.q05).toFixed(4)}</td>
+                  <td style="padding:8px;border-bottom:1px solid #eef2f7;text-align:right;">${(r.var95).toFixed(4)}</td>
+                  <td style="padding:8px;border-bottom:1px solid #eef2f7;text-align:center;">
+                    <span class="pill ${riskClass}">${r.risk_light}</span>
+                  </td>
+                  <td style="padding:8px;border-bottom:1px solid #eef2f7;text-align:right;">${(r.ret1).toFixed(4)}</td>
+                  <td style="padding:8px;border-bottom:1px solid #eef2f7;text-align:center;">${exceedTag}</td>
+                </tr>`
+            }).join('');
+          }
+        } catch (e) { console.warn('表格渲染失败', e); }
+      } catch (e) { el.innerText = '生成出错：' + e; }
+    }
+
+    document.getElementById('btn-run').addEventListener('click', runInfer);
+    document.getElementById('btn-note').addEventListener('click', genNote);
+    document.getElementById('btn-chat').addEventListener('click', ()=>{ window.location.href = '/chat'; });
+    
+  // 因果关系报告逻辑
+  async function runCausality() {
+    const params = readForm();
+    document.getElementById('causality-summary').innerText = '生成中...';
+    try {
+      const resp = await fetch('/api/feature_causality', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(params) });
+      const out = await resp.json();
+      if (!out.ok) { document.getElementById('causality-summary').innerText = out.error || '生成失败'; return; }
+
+      const report = out.report;
+      const rows = report.results || [];
+            document.getElementById('causality-panel').style.display = 'block';
+            document.getElementById('causality-summary').innerText = `检测特征: ${rows.length}（已保存: ${out.path ? out.path.split('/').pop() : 'N/A'}）`;
+            // 启用控件
+            document.getElementById('btn-download-causality').disabled = false;
+            document.getElementById('causality-filter').disabled = false;
+
+      // 渲染表格与图表函数
+      const renderTable = (data) => {
+        const tbody = document.querySelector('#tbl-causality tbody');
+        tbody.innerHTML = data.map(r => {
+          const statusClass = r.status === '通过检验' ? 'pill green' : (r.status === '无效' ? 'pill red' : 'pill yellow');
+          const disp = r.feature_cn ? r.feature_cn : r.feature;
+          return `
+          <tr>
+            <td style="padding:8px;border-bottom:1px solid #eef2f7;">${disp}</td>
+            <td style="padding:8px;border-bottom:1px solid #eef2f7;">${r.best_lag ?? '-'}</td>
+            <td style="padding:8px;border-bottom:1px solid #eef2f7;text-align:right;">${(r.best_pvalue||1).toFixed(4)}</td>
+            <td style="padding:8px;border-bottom:1px solid #eef2f7;text-align:right;">${r.pass_windows}/${r.n_windows}</td>
+            <td style="padding:8px;border-bottom:1px solid #eef2f7;text-align:center;"><span class="${statusClass}">${r.status}</span></td>
+          </tr>`
+        }).join('');
+      };
+
+      const renderChart = (data) => {
+        // 选择 top 15 by pass_ratio
+        const sorted = data.slice().sort((a,b)=> (b.pass_ratio||0)-(a.pass_ratio||0)).slice(0,15);
+        const labels = sorted.map(r=> r.feature_cn ? r.feature_cn : r.feature);
+        const vals = sorted.map(r=>r.pass_ratio||0);
+        const colors = sorted.map(r=> r.status==='通过检验' ? '#16a34a' : (r.status==='不稳定' ? '#f59e0b' : '#ef4444'));
+        const trace = { x: vals.map(v=>v*100), y: labels, type: 'bar', orientation: 'h', marker: { color: colors } };
+  const layout = { margin:{l:200,r:20,t:10,b:40}, xaxis:{title:'通过比例 (%)'}, yaxis: { title: '特征' } };
+        Plotly.newPlot('causality-chart', [trace], layout, {responsive:true});
+      };
+
+      // 初始渲染（若无结果显示空信息）
+      if (!rows || rows.length === 0) {
+        const tbody = document.querySelector('#tbl-causality tbody');
+        tbody.innerHTML = '<tr><td colspan="5" style="padding:12px;color:#94a3b8">暂无可用数据或特征</td></tr>';
+        document.getElementById('causality-chart').innerHTML = '<div style="color:#94a3b8;padding:20px">暂无可视化数据</div>';
+      } else {
+        renderTable(rows);
+        renderChart(rows);
+      }
+
+      // 过滤控件
+      document.getElementById('causality-filter').onchange = (e)=>{
+        const v = e.target.value;
+        if (v === 'all') { renderTable(rows); renderChart(rows); }
+        else { const sub = rows.filter(r=>r.status===v); renderTable(sub); renderChart(sub); }
+      };
+
+      // 下载按钮
+      document.getElementById('btn-download-causality').onclick = () => {
+        const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = 'feature_causality.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      };
+
+    } catch (e) {
+      document.getElementById('causality-summary').innerText = '生成出错：' + e;
+    }
+  }
+
+  document.getElementById('btn-causality').addEventListener('click', runCausality);
+  </script>
+</body>
+</html>

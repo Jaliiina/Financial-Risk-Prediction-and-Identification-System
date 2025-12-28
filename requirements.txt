@@ -1,0 +1,12 @@
+pandas
+numpy
+scikit-learn
+yfinance
+ta
+torch
+matplotlib
+plotly
+streamlit
+pyyaml
+flask
+requests

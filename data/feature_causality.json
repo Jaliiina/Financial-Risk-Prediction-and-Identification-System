@@ -1,0 +1,110 @@
+{
+  "meta": {
+    "maxlag": 5,
+    "alpha": 0.05,
+    "n_windows": 3,
+    "lookback": null
+  },
+  "results": [
+    {
+      "feature": "Open",
+      "feature_cn": "开盘价",
+      "best_pvalue": 0.18290452475112615,
+      "best_lag": 3,
+      "pass_windows": 2,
+      "n_windows": 3,
+      "pass_ratio": 0.6666666666666666,
+      "status": "通过检验"
+    },
+    {
+      "feature": "Low",
+      "feature_cn": "最低价",
+      "best_pvalue": 0.016563199812957213,
+      "best_lag": 3,
+      "pass_windows": 2,
+      "n_windows": 3,
+      "pass_ratio": 0.6666666666666666,
+      "status": "通过检验"
+    },
+    {
+      "feature": "Close",
+      "feature_cn": "收盘价",
+      "best_pvalue": 0.21582268027201942,
+      "best_lag": 3,
+      "pass_windows": 2,
+      "n_windows": 3,
+      "pass_ratio": 0.6666666666666666,
+      "status": "通过检验"
+    },
+    {
+      "feature": "Volume",
+      "feature_cn": "成交量",
+      "best_pvalue": 0.34574531118297985,
+      "best_lag": 2,
+      "pass_windows": 2,
+      "n_windows": 3,
+      "pass_ratio": 0.6666666666666666,
+      "status": "通过检验"
+    },
+    {
+      "feature": "rsi",
+      "feature_cn": "RSI(14)",
+      "best_pvalue": 1.0,
+      "best_lag": null,
+      "pass_windows": 1,
+      "n_windows": 3,
+      "pass_ratio": 0.3333333333333333,
+      "status": "不稳定"
+    },
+    {
+      "feature": "macd",
+      "feature_cn": "MACD",
+      "best_pvalue": 1.0,
+      "best_lag": null,
+      "pass_windows": 1,
+      "n_windows": 3,
+      "pass_ratio": 0.3333333333333333,
+      "status": "不稳定"
+    },
+    {
+      "feature": "macd_sig",
+      "feature_cn": "MACD 信号",
+      "best_pvalue": 1.0,
+      "best_lag": null,
+      "pass_windows": 1,
+      "n_windows": 3,
+      "pass_ratio": 0.3333333333333333,
+      "status": "不稳定"
+    },
+    {
+      "feature": "bb_high",
+      "feature_cn": "布林带上轨",
+      "best_pvalue": 1.0,
+      "best_lag": null,
+      "pass_windows": 1,
+      "n_windows": 3,
+      "pass_ratio": 0.3333333333333333,
+      "status": "不稳定"
+    },
+    {
+      "feature": "High",
+      "feature_cn": "最高价",
+      "best_pvalue": 0.13668298803688497,
+      "best_lag": 3,
+      "pass_windows": 0,
+      "n_windows": 3,
+      "pass_ratio": 0.0,
+      "status": "无效"
+    },
+    {
+      "feature": "bb_low",
+      "feature_cn": "布林带下轨",
+      "best_pvalue": 1.0,
+      "best_lag": null,
+      "pass_windows": 0,
+      "n_windows": 3,
+      "pass_ratio": 0.0,
+      "status": "无效"
+    }
+  ]
+}

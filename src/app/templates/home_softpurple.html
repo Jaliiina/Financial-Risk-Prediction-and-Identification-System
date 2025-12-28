@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AuroraFin｜风险预测与投研平台</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+
+  <style>
+    /* —— 页面背景与基础色（与 chat 页一致：顶部淡紫，下方纯白） —— */
+    body {
+      background: linear-gradient(to bottom, #ede9fe 0%, #fdfdfd 40%, #ffffff 100%);
+      color: #1d2b3a;
+      overflow-x: hidden;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+    }
+
+    /* —— 柔光极光与星空：轻量氛围，避免喧宾夺主 —— */
+    .aurora {
+      position: fixed; inset: -30vmax;
+      background:
+        radial-gradient(60vmax 60vmax at 20% 20%, rgba(124,58,237,0.12), transparent 70%),
+        radial-gradient(60vmax 60vmax at 80% 60%, rgba(34,211,238,0.10), transparent 70%);
+      filter: blur(90px);
+      animation: drift 22s linear infinite alternate;
+      z-index: -2; opacity: .6;
+    }
+    @keyframes drift { to { transform: translate3d(0,-2vmax,0) scale(1.03); } }
+
+    .stars { position: fixed; inset: 0; pointer-events: none; z-index: -1; }
+    .star {
+      position: absolute; width: 2px; height: 2px; border-radius: 50%;
+      background: rgba(124,58,237,0.5); opacity: 0.6;
+      filter: drop-shadow(0 0 6px rgba(124,58,237,0.35));
+      animation: twinkle var(--t, 6s) ease-in-out infinite;
+    }
+    @keyframes twinkle { 50% { opacity: 0.2; transform: translateY(-3px) scale(0.8); } }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+
+    /* —— 头部采用与 chat.html 相同结构与类名（brand/logo/mark 均沿用 style.css） —— */
+    .app-header.brand {
+      background: rgba(255,255,255,0.75);
+      border-bottom: 1px solid rgba(203,213,225,0.45);
+      backdrop-filter: blur(12px);
+      padding: 28px 20px;
+    }
+
+    /* —— 首页 Hero 卡片与特性卡片 —— */
+    .hero {
+      margin-top: 24px;
+      background: rgba(255,255,255,0.92);
+      border: 1px solid rgba(124,58,237,0.15);
+      border-radius: 20px;
+      padding: 28px;
+      backdrop-filter: blur(12px) saturate(115%);
+      box-shadow: 0 10px 25px rgba(124,58,237,0.10);
+      position: relative; overflow: hidden;
+    }
+    .hero .glow {
+      position: absolute; inset: -40%;
+      opacity: .15; filter: blur(60px); pointer-events: none;
+      background: radial-gradient(40vmax 40vmax at 50% 50%, rgba(124,58,237,0.25), transparent 70%);
+    }
+    .badge {
+      display: inline-block; font-size: 12px; letter-spacing: .6px;
+      padding: 6px 10px; border-radius: 999px;
+      background: linear-gradient(135deg, #7c3aed, #22d3ee);
+      color: #fff; border: none; text-transform: uppercase;
+    }
+    .hero h1 { margin: 10px 0 8px; font-size: 30px; color: #203050; }
+    .hero p { color: #5b6b7a; margin: 0 0 16px; }
+    .cta { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn {
+      text-decoration: none; font-weight: 700;
+      padding: 12px 16px; border-radius: 12px;
+      border: 1px solid rgba(74, 131, 237, 0.3);
+      background: linear-gradient(135deg,#7c3aed, #22d3ee);
+      color: #ffffff; transition: all .2s ease; position: relative; isolation: isolate;
+    }
+    .btn.primary { background: linear-gradient(135deg, #7c3aed, #22d3ee); color: #fff; border: none; }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(124,58,237,0.22); }
+
+    .features { display: grid; gap: 16px; grid-template-columns: 1fr; margin-top: 16px; }
+    @media (min-width: 960px) { .features { grid-template-columns: repeat(3, 1fr); } }
+    .feature-card {
+      border-radius: 16px; padding: 18px;
+      background: rgba(255,255,255,0.9);
+      border: 1px solid rgba(124,58,237,0.12);
+      box-shadow: 0 6px 18px rgba(124,58,237,0.08);
+      transition: transform .2s ease, box-shadow .2s ease;
+    }
+    .feature-card:hover { transform: translateY(-2px); box-shadow: 0 16px 36px rgba(124,58,237,0.12); }
+    .feature-card h3 { margin: 0 0 6px; font-size: 16px; color: black; }
+    .feature-card p { margin: 0 0 10px; font-size: 13px; color: #4b5563; line-height: 1.7; }
+
+    .quick-links { display: flex; gap: 10px; flex-wrap: wrap; }
+    .quick-links a {
+      text-decoration: none; font-size: 12px; padding: 6px 10px; border-radius: 999px;
+      background: #f5f3ff; border: 1px solid rgba(124,58,237,0.14); color: #000000;
+    }
+
+    .app-footer { text-align: center; color: #6b7280; font-size: 12px; padding: 30px 0 18px; }
+  </style>
+</head>
+
+<body>
+  <!-- 柔光极光 & 星空 -->
+  <div class="aurora"></div>
+  <div class="stars" id="stars"></div>
+
+  <!-- 顶部品牌头：采用你给的“logo部分”结构，并与 chat.html 的类名保持一致 -->
+  <header class="app-header brand">
+    <div class="container" style="text-align:center;">
+      <div class="brand-logo" style="flex-direction:column;align-items:center;display:flex;">
+        <span class="mark" style="margin-bottom:8px;"></span>
+        <div>
+          <div class="name"
+               style="font-size:22px;font-weight:700;color:#0f172a;letter-spacing:0.5px;">
+            AuroraFin｜智能金融风险预警与投研平台
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主体：Hero + 特性卡片，与 chat/style 的品牌视觉对齐 -->
+  <main class="container">
+    <section class="hero">
+      <div class="glow"></div>
+      <span class="badge">AURORAFIN LAUNCHPAD</span>
+      <h1>一键抵达 · 风险预警与智能投研中心</h1>
+      <p>浏览模型输出与回测，或直接向 Lumen 发问：<em>“当前 VaR95 风险等级？” “给我 3 条交易要点。”</em></p>
+      <div class="cta">
+        <a class="btn primary" href="/risk">进入风险预测</a>
+        <a class="btn" href="/chat">打开投研助手</a>
+        <a class="btn" href="/guide">查看使用指南</a>
+      </div>
+    </section>
+
+    <section class="features">
+      <div class="feature-card">
+        <h3>风险面板</h3>
+        <p>价格/收益/分位预测多列对齐，异常点高亮，“绿/黄/红”信号与回测表同屏查看。</p>
+        <div class="quick-links">
+          <a href="/risk">打开面板</a>
+          <a href="/risk#note">生成投研建议</a>
+        </div>
+      </div>
+
+      <div class="feature-card">
+        <h3>投研助手 Lumen</h3>
+        <p>接入 DeepSeek API，基于最新模型结果回答“风险如何”“策略要点”“因子解释”等自然语言问题。</p>
+        <div class="quick-links">
+          <a href="/chat">开始对话</a>
+          <a href="/chat#samples">示例问题</a>
+        </div>
+      </div>
+
+    <!-- 新增：模型验证与置信度特性卡片 -->
+      <div class="feature-card">
+        <h3>模型验证 & 置信度</h3>
+        <p>VaR命中率检验、Kupiec回测、滚动覆盖率分析，为每次预测提供置信度评分，确保模型可靠性。</p>
+        <div class="quick-links">
+          <a href="/validation">查看验证报告</a>
+          <a href="/risk#confidence">置信度面板</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">© AuroraFin · Lumen</footer>
+
+  <script>
+    // 星空点缀
+    (function(){
+      const stars = document.getElementById('stars');
+      const N = 60;
+      for (let i = 0; i < N; i++) {
+        const s = document.createElement('div');
+        s.className = 'star';
+        const x = Math.random() * 100, y = Math.random() * 100, d = 2 + Math.random() * 2;
+        s.style.left = x + 'vw'; s.style.top = y + 'vh';
+        s.style.width = d + 'px'; s.style.height = d + 'px';
+        s.style.setProperty('--t', (4 + Math.random() * 4) + 's');
+        stars.appendChild(s);
+      }
+    })();
+  </script>
+</body>
+</html>

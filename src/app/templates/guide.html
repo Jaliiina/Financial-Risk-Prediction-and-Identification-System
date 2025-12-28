@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AuroraFin · 使用指南</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <style>
+    /* 轻量补充样式，主体仍复用你的 style.css */
+    body { background: linear-gradient(135deg, #e9f0ff, #f7f9fb); color:#1d2b3a; }
+    .container{ max-width: 1080px; margin: 0 auto; padding: 24px; }
+    .app-header.brand{ background: linear-gradient(135deg, #e9f0ff, #f7f9fb); border-bottom:1px solid #dce3ed; }
+    .brand-logo{ display:flex; gap:12px; align-items:center; }
+    .brand-logo .mark{ width:36px;height:36px;border-radius:12px; background: linear-gradient(135deg, #60a5fa, #3b82f6); box-shadow: 0 0 20px rgba(59,130,246,0.25); }
+    .assistant-chip{ display:flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; border:1px solid #c3d3f9; background:rgba(255,255,255,0.85); color:#4b5563; box-shadow:0 4px 18px rgba(59,130,246,0.12); }
+    .assistant-chip .avatar{ width:24px;height:24px;border-radius:50%;display:grid;place-items:center; font-weight:700;background: linear-gradient(135deg, #60a5fa, #3b82f6); color:#fff; }
+    .assistant-chip .label{ font-weight:600; color:#0f172a; }
+
+    .guide{ background:#fff; border:1px solid #d9e4ff; border-radius:16px; padding:22px; box-shadow:0 10px 24px rgba(59,130,246,.08); }
+    h1{ font-size:28px; margin:0 0 8px; color:#203050; }
+    .muted{ color:#6b7280; margin:0 0 14px; }
+    .toc{ display:grid; gap:10px; grid-template-columns: 1fr; margin:12px 0 10px; padding:12px; border-radius:12px; background:#f7faff; border:1px solid #d9e4ff; }
+    @media (min-width: 860px){ .toc{ grid-template-columns: repeat(2, 1fr);} }
+    .toc a{ text-decoration:none; padding:8px 10px; border-radius:10px; color:#203050; border:1px dashed #c3d3f9; background: #f7faff; font-size:14px; }
+    section.block{ margin:18px 0; padding-top:8px; }
+    section.block h2{ font-size:18px; color:#203050; margin:0 0 6px; }
+    section.block p, li{ color:#374151; line-height:1.75; font-size:14px; }
+    code, kbd{ background:#eef4ff; border:1px solid #d9e4ff; padding:.1rem .4rem; border-radius:6px; }
+    .note{ border-left:3px solid #3b82f6; background:#eef4ff; padding:10px 12px; border-radius:8px; }
+    .btn-bar{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+    .btn{ text-decoration:none; font-weight:600; font-size:14px; padding:10px 14px; border-radius:10px; color:#203050; background:linear-gradient(135deg, #eef4ff, #f7faff); border:1px solid #c3d3f9; }
+    .btn.primary{ background: linear-gradient(135deg, #60a5fa, #3b82f6); border:none; color:#fff; }
+    /* 炫彩按钮与图标增强 */
+    .brand-logo .mark{ position:relative; overflow:hidden; background: conic-gradient(from 180deg at 50% 50%, #67e8f9 0deg, #60a5fa 120deg, #3b82f6 210deg, #67e8f9 360deg); box-shadow: 0 6px 18px rgba(59,130,246,.25), 0 0 0 1px rgba(59,130,246,.18) inset; }
+    .brand-logo .mark::after{ content:""; position:absolute; inset:-30%; background: radial-gradient(40% 40% at 30% 30%, rgba(255,255,255,.35), transparent 60%); filter: blur(8px); animation: shine 4s linear infinite; }
+    @keyframes shine { to { transform: translate3d(8px,-8px,0); opacity:.9; } }
+    .btn{ position:relative; isolation:isolate; }
+    .btn::before{ content:""; position:absolute; inset:-2px; border-radius:12px; z-index:-1; background: linear-gradient(135deg, rgba(99,102,241,.65), rgba(56,189,248,.65)); filter: blur(8px); opacity:.55; transition:.25s ease; }
+    .btn:hover::before{ filter: blur(12px); opacity:.85; }
+    .assistant-chip{ border:1px solid rgba(59,130,246,.25); box-shadow:0 6px 20px rgba(59,130,246,.12); }
+  </style>
+</head>
+<body>
+  <header class="app-header brand">
+    <div class="container" style="display:flex;align-items:center;justify-content:space-between;">
+      <div class="brand-logo">
+        <span class="mark"></span>
+        <div>
+          <div class="name">AuroraFin · 曙光投研</div>
+          <div class="sub" style="color:#6b7280;font-size:12px">使用指南与最佳实践</div>
+        </div>
+      </div>
+      <div class="assistant-chip">
+        <span class="avatar">L</span>
+        <span class="label">Lumen</span>
+        <span style="font-size:12px;color:#6b7280">Quant Research Assistant</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="guide">
+      <h1>使用指南</h1>
+      <p class="muted">本页涵盖快速上手、页面导航、模型与数据、风险灯含义、Lumen 问法示例、常见问题与故障排查。</p>
+
+      <nav class="toc">
+        <a href="#quickstart">① 快速上手</a>
+        <a href="#nav">② 页面导航</a>
+        <a href="#model">③ 数据与模型</a>
+        <a href="#risk">④ 风险灯说明</a>
+        <a href="#lumen">⑤ Lumen 问法示例</a>
+        <a href="#params">⑥ 参数配置</a>
+        <a href="#faq">⑦ 常见问题</a>
+        <a href="#support">⑧ 反馈与支持</a>
+      </nav>
+
+      <section id="quickstart" class="block">
+        <h2>① 快速上手</h2>
+        <ol>
+          <li>在 <code>风险预测</code> 页面加载数据后，点击 <code>运行</code> 生成 <code>q<sub>α</sub></code> 与 <code>VaR95</code> 结果。</li>
+          <li>根据“风险灯（绿/黄/红）”查看当期风险等级与近 10 次回测表现。</li>
+          <li>切换到 <code><a href="/chat">投研助手</a></code>，向 Lumen 提问获取要点式建议。</li>
+        </ol>
+        <div class="btn-bar">
+          <a class="btn primary" href="/risk">进入风险预测</a>
+          <a class="btn" href="/chat">打开投研助手</a>
+        </div>
+      </section>
+
+      <section id="nav" class="block">
+        <h2>② 页面导航</h2>
+        <ul>
+          <li><b>首页/Launchpad：</b>入口、功能卡片与快捷链接。</li>
+          <li><b>风险预测：</b>价格/收益/分位预测、回测与风险灯。</li>
+          <li><b>投研助手：</b>Lumen 对话页，支持自然语言问答。</li>
+        </ul>
+      </section>
+
+      <section id="model" class="block">
+        <h2>③ 数据与模型</h2>
+        <p>核心为 <b>LSTM 分位回归</b> 与 <b>VaR95</b> 风险评估。建议：</p>
+        <ul>
+          <li>窗口长度 <code>window</code> 与步长 <code>stride</code> 根据资产波动性调优。</li>
+          <li>标准化器、权重路径、阈值等在 <code>参数设置</code> 区统一管理。</li>
+          <li>支持多模型集成以降低单一模型误差。</li>
+        </ul>
+      </section>
+
+      <section id="risk" class="block">
+        <h2>④ 风险灯说明</h2>
+        <ul>
+          <li><b>绿：</b>风险较低，策略以持有/轻仓为主。</li>
+          <li><b>黄：</b>风险中性，关注波动扩大与关键位。</li>
+          <li><b>红：</b>风险偏高，考虑减仓/对冲。</li>
+        </ul>
+        <p class="note">阈值可在参数面板中自定义，回测表展示最近 10 次信号与真实收益对比，便于检验有效性。</p>
+      </section>
+
+      <section id="lumen" class="block">
+        <h2>⑤ Lumen 问法示例</h2>
+        <ul>
+          <li>“当前 <code>VaR95</code> 与风险灯是什么？”</li>
+          <li>“用三点概括下一交易日的策略要点。”</li>
+          <li>“解释最近一次红灯背后的因子变化。”</li>
+          <li>“把面板里的 q<sub>α</sub> 结果翻译成操作建议。”</li>
+        </ul>
+      </section>
+
+      <section id="params" class="block">
+        <h2>⑥ 参数配置</h2>
+        <ul>
+          <li><b>数据源：</b>本地/远端路径。</li>
+          <li><b>模型：</b>权重文件、分位列表、窗口长度。</li>
+          <li><b>评估：</b>VaR 阈值、回测区间、打分权重。</li>
+          <li><b>导出：</b>报告模板/CSV。</li>
+        </ul>
+      </section>
+
+      <section id="faq" class="block">
+        <h2>⑦ 常见问题</h2>
+        <ul>
+          <li><b>无图/无结果：</b>检查数据路径、日期范围与标准化器是否匹配。</li>
+          <li><b>信号与实际相反：</b>缩短窗口、增大训练样本或启用多模型集成。</li>
+          <li><b>Lumen 不回答模型问题：</b>确认后端已将最新预测写入可读通道（如缓存/文件）。</li>
+        </ul>
+      </section>
+
+      <section id="support" class="block">
+        <h2>⑧ 反馈与支持</h2>
+        <p>问题/建议可在 <code>issues</code> 中提交，或邮件至 <code>support@aurorafin.local</code>。你也可以在 <b>投研助手</b> 中输入“<code>反馈</code>”触发反馈模板。</p>
+        <div class="btn-bar">
+          <a class="btn" href="/">返回首页</a>
+          <a class="btn" href="/chat">继续对话</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="app-footer" style="text-align:center;color:#6b7280;font-size:12px;padding:30px 0 18px;">
+    © AuroraFin · Lumen
+  </footer>
+</body>
+</html>

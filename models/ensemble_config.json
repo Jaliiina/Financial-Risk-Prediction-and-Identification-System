@@ -1,0 +1,6 @@
+{
+  "lstm_model": "C:\\Users\\18610\\Desktop\\finrisk_b\\models\\best_lstm_quantile.pt",
+  "lgb_eval_summary": null,
+  "scaler": "C:\\Users\\18610\\Desktop\\finrisk_b\\models\\scaler.pkl",
+  "lgb_scaler": null
+}
