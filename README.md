@@ -1,0 +1,2 @@
+# Financial-Risk-Prediction-and-Identification-System
+AruraFin是一个集成了数据抓取、特征分析和多任务深度学习模型的金融风险预测系统，旨在为用户提供全面的金融市场数据分析与风险评估能力。
